@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: postgres
+    image: postgres:14.5
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5431:5432"
+    networks:
+      - postgres
+    restart: unless-stopped
+    volumes:
+      - type: volume
+        source: db-data
+        target: /var/lib/postgresql/data
+  pgadmin:
+    container_name: pgadmin4
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5550}:80"
+    networks:
+      - postgres
+    restart: unless-stopped
+  www:
+    build: docker
+    container_name: loft
+    restart: always
+    ports:
+      - "8000:80"
+    volumes:
+      - ./docker/vhosts:/etc/apache2/sites-enabled
+      - ${FOLDER_WWWW}:/var/www
+    networks:
+      - dev
+
+networks:
+  dev:
+  postgres:
+    driver: bridge
+
+volumes:
+  db-data:
+  pgadmin:
